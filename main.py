@@ -11,38 +11,33 @@ model_id = "IDEA-Research/grounding-dino-base"
 processor = AutoProcessor.from_pretrained(model_id)
 model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id)
 
-# Load an image (ensure the image file exists in your working directory)
+# Load an image
 try:
-    image = Image.open("cat.png").convert("RGB")
+    image = Image.open("animals.png").convert("RGB")
 except FileNotFoundError:
     print("Error: image not found. Please provide a valid image file.")
     exit()
 
 # Load object categories from a CSV file
 try:
-    # Read CSV file (assumes a column named 'category')
     categories_df = pd.read_csv("object_categories.csv")
-    # Extract categories as a list
     categories = categories_df["category"].tolist()
-    # Create text prompt by joining categories with " . "
     text_prompt = " . ".join(categories)
 except FileNotFoundError:
     print("Error: 'object_categories.csv' not found. Using fallback categories.")
-    # Fallback to a smaller set of categories if CSV is missing
     categories = ["person", "dog", "cat", "car", "truck", "bicycle"]
     text_prompt = " . ".join(categories)
 except KeyError:
     print("Error: CSV file must contain a 'category' column.")
     exit()
 
-# Optional: Limit the number of categories to avoid token limit issues
-max_categories = 100  # Adjust based on model token limit
+# Limit the number of categories
+max_categories = 100
 if len(categories) > max_categories:
     print(f"Warning: Truncating to {max_categories} categories to avoid token limit.")
     categories = categories[:max_categories]
     text_prompt = " . ".join(categories)
 
-# Print the number of categories loaded
 print(f"Loaded {len(categories)} categories for detection.")
 
 # Preprocess the inputs
@@ -74,23 +69,43 @@ for box, score, label in zip(results["boxes"], results["scores"], results["text_
     if score > 0.4:
         box = [int(b) for b in box]
         x1, y1, x2, y2 = box
-        cv2.rectangle(image_cv, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        
-        # Calculate text size and position
+
+        # Calculate box dimensions
+        box_width = x2 - x1
+        box_height = y2 - y1
+
+        # Define text and font properties
         text = f"{label} {score:.2f}"
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.5
-        font_thickness = 1
+        min_font_scale = 0.3  # Minimum font size for readability
+        max_font_scale = 1.0  # Maximum font size
+        font_thickness = 1    # Initial thickness, adjusted later
+
+        # Find appropriate font scale to fit text within half the box width
+        target_width = box_width / 2  # Text width should not exceed half the box width
+        font_scale = max_font_scale
+        while font_scale >= min_font_scale:
+            text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+            if text_size[0] <= target_width:
+                break
+            font_scale -= 0.05  # Decrease font scale incrementally
+        font_scale = max(font_scale, min_font_scale)  # Ensure minimum font scale
+        font_thickness = max(1, int(font_scale * 2))  # Adjust thickness
+
+        # Recalculate text size with final font scale
         text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
-        
+
+        # Draw bounding box
+        cv2.rectangle(image_cv, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
         # Place text inside the box, near the top
         text_x = x1 + 5
         text_y = y1 + text_size[1] + 5  # 5 pixels from top of box
-        
+
         # Ensure text stays within image bounds
-        text_y = max(text_y, text_size[1] + 5)  # Ensure text doesn't go above image
-        text_y = min(text_y, image_height - 5)  # Ensure text doesn't go below image
-        
+        text_y = max(text_y, text_size[1] + 5)
+        text_y = min(text_y, image_height - 5)
+
         # Add a semi-transparent black rectangle as text background
         bg_x1 = text_x - 2
         bg_y1 = text_y - text_size[1] - 2
@@ -98,9 +113,9 @@ for box, score, label in zip(results["boxes"], results["scores"], results["text_
         bg_y2 = text_y + 2
         overlay = image_cv.copy()
         cv2.rectangle(overlay, (bg_x1, bg_y1), (bg_x2, bg_y2), (0, 0, 0), -1)
-        alpha = 0.6  # Transparency factor
+        alpha = 0.6
         cv2.addWeighted(overlay, alpha, image_cv, 1 - alpha, 0, image_cv)
-        
+
         # Draw text
         cv2.putText(
             image_cv,

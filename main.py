@@ -13,7 +13,7 @@ model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id)
 
 # Load an image (ensure the image file exists in your working directory)
 try:
-    image = Image.open("dogs.jpg").convert("RGB")
+    image = Image.open("cat.png").convert("RGB")
 except FileNotFoundError:
     print("Error: image not found. Please provide a valid image file.")
     exit()
@@ -79,8 +79,8 @@ for box, score, label in zip(results["boxes"], results["scores"], results["text_
         # Calculate text size and position
         text = f"{label} {score:.2f}"
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.5
-        font_thickness = 3
+        font_scale = 0.5
+        font_thickness = 1
         text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
         
         # Place text inside the box, near the top

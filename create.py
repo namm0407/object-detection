@@ -17,7 +17,9 @@ categories = [
     "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink",
     "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier",
     "toothbrush", "tree", "building", "road", "sky", "grass", "cloud", "window",
-    "door", "fence", "street sign", "lamp", "table", "box", "bag", "shoe", "hat"
+    "door", "fence", "street sign", "lamp", "table", "box", "bag", "shoe", "hat",
+    "lion", "tiger", "wolf", "fox", "deer", "rabbit", "squirrel", "monkey",
+    "panda", "kangaroo", "snake", "turtle", "frog", "fish", "lizard"
 ]
 
 # Save to CSV
@@ -38,6 +40,8 @@ if os.path.exists(csv_path):
         df = pd.read_csv(csv_path, encoding='utf-8')
         print("First 5 categories in CSV:")
         print(df.head())
+        print("Last 5 categories in CSV:")
+        print(df.tail())
     except Exception as e:
         print(f"Error reading created CSV: {e}")
 else:

@@ -1,3 +1,5 @@
+# To create the object_categories.csv
+
 import pandas as pd
 import os
 

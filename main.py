@@ -15,7 +15,7 @@ model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id)
 try:
     image = Image.open("dogs.jpg").convert("RGB")
 except FileNotFoundError:
-    print("Error: 'dogs.jpg' not found. Please provide a valid image file.")
+    print("Error: image not found. Please provide a valid image file.")
     exit()
 
 # Load object categories from a CSV file
